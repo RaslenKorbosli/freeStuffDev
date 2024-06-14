@@ -1,0 +1,89 @@
+---
+import { getCollection } from 'astro:content'
+import Layout from '../../layouts/Layout.astro'
+import Header from '../../components/Header.astro'
+import Card from '../../components/Card.astro'
+import Sponsors from '../../components/Sponsors.astro'
+
+export async function getStaticPaths() {
+    const tools = await getCollection('tools')
+    return tools.map((tool) => {
+        return {
+            params: {
+                slug: tool.slug
+            },
+            props: {
+                tool
+            }
+        }
+    })
+}
+
+const tool = Astro.props.tool
+const year = new Date().getFullYear()
+
+const relatedTags = tool.data.tags.map((tag: string) => {
+    return tag
+})
+
+let groupedTools = {} as any
+for(let i = 0; i < relatedTags.length; i++) {
+    // WARNING: Don't lowercase the tag here
+    const tag = relatedTags[i].trim()
+    const tools = await getCollection('tools', ({ data }) => {
+        return data.tags.includes(tag)
+    })
+
+    // remove the current tool from the list
+    const index = tools.findIndex((t) => t.slug === tool.slug)
+    if (index > -1) {
+        tools.splice(index, 1)
+    }
+
+    if (tools.length === 0) {
+        continue
+    }
+
+    groupedTools[tag] = tools   
+}
+
+let tagsInString = relatedTags.join(', ')
+tagsInString = tagsInString.replace(/,([^,]*)$/, ' and$1')
+
+const toolTitle = tool.data.title
+const title = `Find free alternative to ${toolTitle} for developers - ${year}`
+const description = `List of free alternative to ${toolTitle} for developers. Find the best alternative to ${tool.data.title} as ${tagsInString} tools for your needs.`
+---
+
+<Layout
+	title={title}
+	description={description}
+	>
+
+    <Header
+        title={title}
+        description={description}
+        />
+
+    <Card tool={tool} />
+
+    <div class="mt-10">
+    {Object.keys(groupedTools).map((tag) => {
+        return (
+            <div>
+                <h3 class="text-xl mb-5 text-sky-200">👉 Alternative to {toolTitle} as {tag} tools/services</h3>
+                <div class="grid grid-cols-1 gap-4">
+                    {groupedTools[tag].map((tool: any) => {
+                        return (
+                            <Card tool={tool} />
+                        )
+                    })}
+                </div>
+            </div>
+        )
+    })}
+    </div>
+
+    <Sponsors />
+
+</Layout>

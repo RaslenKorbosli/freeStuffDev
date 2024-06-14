@@ -1,0 +1,50 @@
+---
+import { getCollection } from 'astro:content'
+import Layout from '../../layouts/Layout.astro'
+import Header from '../../components/Header.astro'
+import Card from '../../components/Card.astro'
+
+export async function getStaticPaths() {
+    const tools = await getCollection('tools')
+
+    const tags = tools.map((post) => post.data.tags).flat()
+    const uniqueTags = [...new Set(tags)]
+
+    return uniqueTags.map((tag) => ({
+        params: {
+            slug: tag.toLowerCase()
+        },
+        props: {
+            tag
+        }
+    }))
+}
+
+const tag = Astro.props.tag
+
+// Get all tools that has that tag
+const tools = await getCollection('tools', ({ data }) => {
+    return data.tags.includes(tag.trim().toLowerCase())
+})
+
+const title = `Free ${tag} tools or service for developers`
+const description = `A collection of free ${tag} app, tools or service for developers`
+---
+
+<Layout
+	title={title}
+	description={description}
+	>
+    
+    <Header
+        title={title}
+        description={description}
+        />
+
+    <div class="mt-10">
+        {tools.map((tool) => (
+            <Card tool={tool} />
+        ))}
+    </div>
+
+</Layout>

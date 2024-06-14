@@ -1,0 +1,108 @@
+---
+import { getCollection } from 'astro:content'
+import Layout from '../layouts/Layout.astro'
+import Card from '../components/Card.astro'
+import Header from '../components/Header.astro'
+import Sponsors from '../components/Sponsors.astro'
+
+// Get all tools collection, not isPaid
+const tools = await getCollection('tools', ({data}) => {
+	return data.isPaid !== true
+})
+
+// Randomize the list
+tools.sort(() => Math.random() - 0.5)
+
+const title="Free tools and services for Developer"
+const description="List of free stuff for developer by developer to use. This is a collective list of useful services for developer you can use for your next MVP or prototpying your idea."
+
+---
+
+<Layout
+	title={title}
+	description={description}
+	>
+
+	<Header
+		title={title}
+		description={description}
+		/>
+
+	<Sponsors />
+
+	<p class="text-xl mb-3">Free Dev Tools 👇🏼</p>
+	
+
+	<div class="flex justify-between items-center space-x-5">
+		<div class="w-full">
+			<input 
+				class="bg-gray-700 text-white text-sm rounded-md w-full border border-white p-2"
+				type="text"
+				placeholder="search anything here..."
+				id="searchbox">
+		</div>
+
+			
+		<div class="flex justify-end items-center w-[200px]">
+			<label for="sort" class="text-sm">Sort by:</label>
+			<select id="sort" 
+				class="bg-gray-800 text-white text-sm rounded-md ml-2 border border-white p-2">
+				<option value="random">Random</option>
+				<option value="newest">Newest</option>
+			</select>
+
+			<script>
+				document.getElementById('sort')?.addEventListener('change', (e) => {
+					if(!e.target) return
+
+					const sort = (e.target as any).value
+					if (sort === 'newest') {
+						location.href = '/recent'
+					} else {
+						location.href = '/'
+					}
+				})
+			</script>
+		</div>
+	</div>
+
+	<div class="mt-10">
+		{
+			tools.map((tool) => (
+				<Card tool={tool} />
+			))
+		}
+	</div>
+
+	<!-- Important: position is after cards -->
+	<script is:inline>
+		function initSearch() {
+			const cards = document.querySelectorAll('.cards')
+			// A little delay
+			let typingTimer;        
+			let typeInterval = 500; // Half a second
+			let searchInput = document.getElementById('searchbox');
+
+			searchInput.addEventListener('keyup', () => {
+				clearTimeout(typingTimer);
+				typingTimer = setTimeout(liveSearch, typeInterval);
+			});
+			
+			function liveSearch() {
+				const searchQ = searchInput.value
+				for (var i = 0; i < cards.length; i++) {
+					if(cards[i].textContent.toLowerCase()
+							.includes(searchQ.toLowerCase())) {
+						cards[i].classList.remove("hidden");
+					} else {
+						cards[i].classList.add("hidden");
+					}
+				}
+			}
+		}
+		
+		document.addEventListener('DOMContentLoaded', initSearch)
+		document.addEventListener('astro:after-swap', initSearch)
+	</script>
+
+</Layout>

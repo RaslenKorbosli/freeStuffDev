@@ -1,0 +1,65 @@
+---
+import { getCollection } from 'astro:content'
+import Card from '../components/Card.astro'
+import Header from '../components/Header.astro'
+import Layout from '../layouts/Layout.astro'
+
+// Get all tools collection, not isPaid
+const tools = await getCollection('tools', ({data}) => {
+	return data.isPaid !== true
+})
+
+// Sort by newest with typescript
+tools.sort((a, b) => {
+	const dateA = new Date(a.data.createdAt) as any
+	const dateB = new Date(b.data.createdAt) as any
+	return dateB - dateA
+})
+
+const title="New Free tools and services for Developer"
+const description="New List of free stuff for developer by developer to use. This is a collective list of useful services for developer you can use for your next MVP or prototpying your idea."
+
+---
+
+<Layout
+	title={title}
+	description={description}
+	>
+
+	<Header
+		title={title}
+		description={description}
+		/>
+
+	<!-- checkbox sort by newest or random -->
+	<div class="flex justify-end items-center">
+		<label for="sort" class="text-sm">Sort by:</label>
+		<select id="sort" 
+			class="bg-gray-800 text-white text-sm rounded-md ml-2 border border-white p-2">
+			<option value="newest">Newest</option>
+			<option value="random" >Random</option>
+		</select>
+
+		<script>
+			document.getElementById('sort')?.addEventListener('change', (e) => {
+				if (!e.target) return
+
+				const sort = (e.target as any).value
+				if (sort === 'newest') {
+					location.href = '?sort=newest'
+				} else {
+					location.href = '/'
+				}
+			})
+		</script>
+	</div>
+
+	<div class="mt-10">
+		{
+			tools.map((tool) => (
+				<Card tool={tool} />
+			))
+		}
+	</div>
+
+</Layout>
